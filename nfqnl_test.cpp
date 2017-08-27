@@ -14,6 +14,7 @@
 
 using namespace std;
 
+#define IP_PROTO_TCP 0x06
 bool opt_verbose;
 
 /* returns packet id */
@@ -25,6 +26,8 @@ static u_int32_t print_pkt (struct nfq_data *tb)
 	u_int32_t mark,ifi; 
 	int ret;
 	unsigned char *data;
+	struct ip* ip_hdr;
+	bool allow = false;
 
 	ph = nfq_get_msg_packet_hdr(tb);
 	if (ph) {
@@ -86,6 +89,15 @@ static u_int32_t print_pkt (struct nfq_data *tb)
 		if (opt_verbose) {
 			printf("payload_len=%d ", ret);
 		}
+		ip_hdr = (struct ip*)data;
+		if (ip_hdr-> ip_v == 4) {
+			uint32_t ip_hdr_len = (ip_hdr->ip_hl << 2);
+			uint32_t ip_len = ip_hdr->ip_len;
+			if (ip_hdr->ip_p == IP_PROTO_TCP) {
+				printf("this is tcp packet\n");
+			}
+		}
+		
 	}
 
 	fputc('\n', stdout);
