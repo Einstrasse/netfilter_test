@@ -11,6 +11,8 @@
 #include <netinet/tcp.h>
 
 #include <libnetfilter_queue/libnetfilter_queue.h>
+#include <algorithm>
+#include <regex>
 
 using namespace std;
 
@@ -107,17 +109,18 @@ static ret_data print_pkt (struct nfq_data *tb)
 				payload_ptr += start_offset;
 				int payload_len = ip_total_len - ip_hdr_len - tcp_hdr_len;
 				if (payload_len > 0) {
-					
+					string tcp_payload(payload_ptr, payload_ptr + payload_len);
+					cout << "tcp_payload: " << endl << tcp_payload << endl;
+					std::regex base_regex("Host: ([^\n]+)");
+				    std::smatch base_match;
+			        if (std::regex_search(tcp_payload, base_match, base_regex)) {
+			            cout << "base_match.size() : " << base_match.size() << endl;
+			            string found_str = base_match[0].str();
+			            cout << found_str << endl; // Host: test.gilgil.net
+			        }
+			        
 				}
-				// printf("%hhx %hhx %hhx %hhx\n", data[0], data[1], data[2], data[3]);
-				// printf("ip_total_len: %d\n", ip_total_len);
-				// printf("ip_hdr_len: %d\n", ip_hdr_len);
-				// printf("tcp_hdr_len: %d\n", tcp_hdr_len);
-				// printf("payload_len: %d\n", payload_len);
-				// //payload dump
-				// // for (int i=0; i < payload_len; i++) {
-				// // 	printf("%c", payload_ptr[i]);
-				// // }
+			
 			}
 		}
 		
@@ -149,7 +152,7 @@ int main(int argc, char **argv)
 {
 	struct nfq_handle *h;
 	struct nfq_q_handle *qh;
-	struct nfnl_handle *nh;
+	// struct nfnl_handle *nh;
 	int fd;
 	int rv;
 	char buf[4096] __attribute__ ((aligned));
