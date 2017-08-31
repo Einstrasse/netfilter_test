@@ -30,6 +30,7 @@ static ret_data print_pkt (struct nfq_data *tb)
 	int ret;
 	unsigned char *data;
 	struct ip* ip_hdr;
+	struct tcphdr *tcp_hdr;
 	bool allow = true;
 	ret_data ret_val;
 
@@ -96,9 +97,27 @@ static ret_data print_pkt (struct nfq_data *tb)
 		ip_hdr = (struct ip*)data;
 		if (ip_hdr-> ip_v == 4) {
 			uint32_t ip_hdr_len = (ip_hdr->ip_hl << 2);
-			uint32_t ip_len = ip_hdr->ip_len;
+			uint32_t ip_total_len = ntohs(ip_hdr->ip_len);
 			if (ip_hdr->ip_p == IP_PROTO_TCP) {
 				printf("this is tcp packet\n");
+				tcp_hdr = (struct tcphdr*)(data + ip_hdr_len);
+				int tcp_hdr_len = tcp_hdr->th_off * 4;
+				int start_offset = ip_hdr_len + tcp_hdr_len;
+				uint8_t *payload_ptr = (uint8_t*)data;
+				payload_ptr += start_offset;
+				int payload_len = ip_total_len - ip_hdr_len - tcp_hdr_len;
+				if (payload_len > 0) {
+					
+				}
+				// printf("%hhx %hhx %hhx %hhx\n", data[0], data[1], data[2], data[3]);
+				// printf("ip_total_len: %d\n", ip_total_len);
+				// printf("ip_hdr_len: %d\n", ip_hdr_len);
+				// printf("tcp_hdr_len: %d\n", tcp_hdr_len);
+				// printf("payload_len: %d\n", payload_len);
+				// //payload dump
+				// // for (int i=0; i < payload_len; i++) {
+				// // 	printf("%c", payload_ptr[i]);
+				// // }
 			}
 		}
 		
