@@ -114,9 +114,34 @@ static ret_data print_pkt (struct nfq_data *tb)
 					std::regex base_regex("Host: ([^\n]+)");
 				    std::smatch base_match;
 			        if (std::regex_search(tcp_payload, base_match, base_regex)) {
-			            cout << "base_match.size() : " << base_match.size() << endl;
-			            string found_str = base_match[0].str();
-			            cout << found_str << endl; // Host: test.gilgil.net
+			            // cout << "base_match.size() : " << base_match.size() << endl;
+
+			        	string host_name;
+			            bool found = false;
+			            if (base_match.size() > 0) {
+				            string found_str = base_match[0].str();
+				            cout << found_str << endl; // Host: test.gilgil.net
+				            int str_len = found_str.length();
+				            cout << str_len << endl;
+				            for (int i=0; i < str_len; i++) {
+				            	char ch = found_str[i];
+				            	if (ch == ' ') {
+				            		found = true;
+				            		host_name = found_str.substr(i+1, str_len - i - 2);// test.gilgil.net
+				            		break;
+				            	}
+				            }
+	
+				            if (found) {
+				            	cout << "host_name in http packet: " << host_name << endl;
+				            	if (host_name.compare("test.gilgil.net") == 0) {
+				            		allow = false;
+				            		cout << "DROP THIS PACKET!!" << endl;
+				            	}
+				            }
+			            }
+		
+
 			        }
 			        
 				}
