@@ -8,7 +8,7 @@
 #include <linux/netfilter.h>		/* for NF_ACCEPT */
 #include <errno.h>
 #include <iostream>
-
+#include <netinet/tcp.h>
 
 #include <libnetfilter_queue/libnetfilter_queue.h>
 
@@ -17,8 +17,11 @@ using namespace std;
 #define IP_PROTO_TCP 0x06
 bool opt_verbose;
 
+typedef pair<u_int32_t, bool> ret_data;
+
 /* returns packet id */
-static u_int32_t print_pkt (struct nfq_data *tb)
+// static u_int32_t print_pkt (struct nfq_data *tb)
+static ret_data print_pkt (struct nfq_data *tb)
 {
 	int id = 0;
 	struct nfqnl_msg_packet_hdr *ph;
@@ -27,7 +30,8 @@ static u_int32_t print_pkt (struct nfq_data *tb)
 	int ret;
 	unsigned char *data;
 	struct ip* ip_hdr;
-	bool allow = false;
+	bool allow = true;
+	ret_data ret_val;
 
 	ph = nfq_get_msg_packet_hdr(tb);
 	if (ph) {
@@ -101,19 +105,25 @@ static u_int32_t print_pkt (struct nfq_data *tb)
 	}
 
 	fputc('\n', stdout);
-
-	return id;
+	ret_val.first = id;
+	ret_val.second = allow;
+	return ret_val;
+	// return id;
 }
 	
 
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	      struct nfq_data *nfa, void *data)
 {
-	u_int32_t id = print_pkt(nfa);
+	ret_data ret = print_pkt(nfa);
+	u_int32_t id = ret.first;
+	bool allow = ret.second;
+	// u_int32_t id = print_pkt(nfa);
 	if (opt_verbose) {
 		printf("entering callback\n");
 	}
-	return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL);
+	// return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL);
+	return nfq_set_verdict(qh, id, allow ? NF_ACCEPT : NF_DROP, 0, NULL);
 }
 
 int main(int argc, char **argv)
